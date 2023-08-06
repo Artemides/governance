@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 
-contract MyToken is ERC20, ERC20Permit, ERC20Votes {
+contract Gimnastiky is ERC20, ERC20Permit, ERC20Votes {
     address governor;
 
     constructor(
