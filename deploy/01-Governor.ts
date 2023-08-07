@@ -14,30 +14,25 @@ const governor = async (hre: HardhatRuntimeEnvironment) => {
 
   console.log({ transactionCount });
 
-  const tokenAddress = ethers.getCreateAddress({
+  const _governorAddress = ethers.getCreateAddress({
     from: deployer,
     nonce: transactionCount + 1,
   });
 
-  console.log({ tokenAddress });
-  myGovernorArgs.push(tokenAddress);
-  const governor = await deploy("MyGovernor", {
-    from: deployer,
-    log: true,
-    args: myGovernorArgs,
-    gasLimit: 3e7,
-  });
+  console.log({ _governorAddress });
 
-  myTokenArgs.push(governor.address);
-
+  myTokenArgs.push(_governorAddress);
   const gimnastiky = await deploy("Gimnastiky", {
     from: deployer,
     log: true,
     args: myTokenArgs,
   });
 
+  const governorFactory = await ethers.getContractFactory("MyGovernor");
+  const governor = await governorFactory.deploy(gimnastiky.address);
+  const governorAddress = await governor.getAddress();
   console.log(
-    `future ${tokenAddress} \n governor ${governor.address} \n gimnastiky${gimnastiky.address}`
+    `future ${_governorAddress} \n governor ${governorAddress} \n gimnastiky${gimnastiky.address}`
   );
 };
 
