@@ -9,7 +9,6 @@ const governor = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts();
 
   const myTokenArgs: any[] = [];
-  const myGovernorArgs: any[] = [];
   const transactionCount = await ethers.provider.getTransactionCount(deployer);
 
   console.log({ transactionCount });
