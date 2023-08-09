@@ -2,7 +2,7 @@ import { deployments, ethers, getNamedAccounts, network } from "hardhat";
 import { developmentChains } from "../hardhat.helper";
 import { Gimnastiky, MyGovernor } from "../typechain-types";
 import { assert } from "chai";
-import { EventLog, Signer, parseEther } from "ethers";
+import { EventLog, Result, Signer, parseEther } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 
 !developmentChains.includes(network.name)
@@ -24,7 +24,7 @@ import { Address } from "hardhat-deploy/dist/types";
 
         await token.delegate(deployerAddrs);
       });
-      it("Delegates 10000 tokens to the owner", async () => {
+      it("Delegates 1000 tokens to the owner", async () => {
         const ownerBalance = await token.balanceOf(deployer);
         assert.equal(ownerBalance.toString(), parseEther("1000").toString());
       });
@@ -48,11 +48,32 @@ import { Address } from "hardhat-deploy/dist/types";
           const events = txReceipt?.logs as EventLog[];
           const event = events.find((e) => e.eventName === "ProposalCreated")!;
           proposalId = event.args.proposalId;
+
+          await network.provider.send("evm_mine");
         });
 
         it("Sets a new Proposal as Pending State", async () => {
           const proposalState = await governor.state(proposalId);
           assert.equal(proposalState, BigInt(0));
+        });
+
+        describe("After voting on a proposal", () => {
+          let VoteCastEvent: Result;
+          beforeEach(async () => {
+            const tx = await governor.castVote(proposalId, 1);
+            const txReceipt = await tx.wait();
+            const events = txReceipt?.logs as EventLog[];
+            const event = events.find((e) => e.eventName === "VoteCast")!;
+            VoteCastEvent = event.args;
+
+            await network.provider.send("evm_mine");
+          });
+
+          it("submitts the deployer's vote correctly", async () => {
+            const [account, , , weight] = VoteCastEvent;
+            assert.equal(account, deployerAddrs);
+            assert.equal(weight, parseEther("1000").toString());
+          });
         });
       });
     });
