@@ -2,7 +2,14 @@ import { deployments, ethers, getNamedAccounts, network } from "hardhat";
 import { developmentChains } from "../hardhat.helper";
 import { Gimnastiky, MyGovernor } from "../typechain-types";
 import { assert } from "chai";
-import { EventLog, Result, Signer, parseEther } from "ethers";
+import {
+  EventLog,
+  Result,
+  Signer,
+  keccak256,
+  parseEther,
+  toUtf8Bytes,
+} from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 
 !developmentChains.includes(network.name)
@@ -19,8 +26,7 @@ import { Address } from "hardhat-deploy/dist/types";
         await deployments.fixture(["governor"]);
         token = await ethers.getContract("Gimnastiky", deployerAddrs);
         tokenAddress = await token.getAddress();
-        const governorFactory = await ethers.getContractFactory("MyGovernor");
-        governor = await governorFactory.deploy(tokenAddress);
+        governor = await ethers.getContract("MyGovernor", deployerAddrs);
 
         await token.delegate(deployerAddrs);
       });
@@ -69,10 +75,28 @@ import { Address } from "hardhat-deploy/dist/types";
             await network.provider.send("evm_mine");
           });
 
-          it("submitts the deployer's vote correctly", async () => {
+          it("submits the deployer's vote correctly", async () => {
             const [account, , , weight] = VoteCastEvent;
             assert.equal(account, deployerAddrs);
             assert.equal(weight, parseEther("1000").toString());
+          });
+
+          it("Allows a proposal execution", async () => {
+            await governor.execute(
+              [tokenAddress],
+              [0],
+              [
+                token.interface.encodeFunctionData("mint", [
+                  deployerAddrs,
+                  parseEther("2000"),
+                ]),
+              ],
+              keccak256(toUtf8Bytes("Give the owner more token"))
+            );
+
+            const deployerBalance = await token.balanceOf(deployer);
+
+            assert.equal(deployerBalance, parseEther("3000"));
           });
         });
       });

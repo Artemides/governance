@@ -16,7 +16,7 @@ contract Gimnastiky is ERC20, ERC20Permit, ERC20Votes {
     }
 
     function mint(address to, uint256 amount) external {
-        require(governor == msg.sender);
+        require(governor == msg.sender, "Only Governor");
         _mint(to, amount);
     }
 
