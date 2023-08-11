@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 abstract contract Governor2 is
     IGovernor,
@@ -92,6 +93,75 @@ abstract contract Governor2 is
             interfaceId == governorCancelId ||
             interfaceId == type(IERC1155Receiver).interfaceId ||
             super.supportsInterface(interfaceId);
+    }
+
+    function name() public view virtual override returns (string memory) {
+        return _name;
+    }
+
+    function propose(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        string memory description
+    ) public virtual override returns (uint256) {
+        address proposer = _msgSender();
+        require(
+            _isValidDescriptionForProposer(proposer, description),
+            "Governor: proposer restricted"
+        );
+
+        uint256 currentTime = clock();
+        require(
+            getVotes(proposer, currentTime - 1) >= proposalThreshold(),
+            "Governor: proposer votes below proposal threshold"
+        );
+
+        uint256 proposalId = hashProposal(
+            targets,
+            values,
+            calldatas,
+            keccak256(bytes(description))
+        );
+
+        require(targets.length > 0, "Governor: Empty proposal");
+        require(
+            targets.length == values.length,
+            "Governor: invalidad proposal length"
+        );
+        require(
+            targets.length == calldatas.length,
+            "Governor: Invalid proposal Length"
+        );
+        require(
+            _proposals[proposalId].voteStart == 0,
+            "Governor: Proposal Already exists"
+        );
+        uint256 snapshot = currentTime + votingDelay();
+        uint256 deadline = snapshot + votingPeriod();
+
+        _proposals[proposalId] = ProposalCore(
+            proposer,
+            SafeCast.toUint64(snapshot),
+            0,
+            SafeCast.toUint64(deadline),
+            0,
+            false,
+            false
+        );
+
+        emit ProposalCreated(
+            proposalId,
+            proposer,
+            targets,
+            values,
+            new string[](targets.length),
+            calldatas,
+            snapshot,
+            deadline,
+            description
+        );
+        return proposalId;
     }
 
     function cancel(
@@ -324,5 +394,73 @@ abstract contract Governor2 is
         uint256 proposalId
     ) public view virtual override returns (address) {
         return _proposals[proposalId].proposer;
+    }
+
+    function proposalThreshold() public view virtual returns (uint256) {
+        return 0;
+    }
+
+    function _isValidDescriptionForProposer(
+        address proposer,
+        string memory description
+    ) internal view virtual returns (bool) {
+        uint256 len = bytes(description).length;
+
+        // Length is too short to contain a valid proposer suffix
+        if (len < 52) {
+            return true;
+        }
+
+        // Extract what would be the `#proposer=0x` marker beginning the suffix
+        bytes12 marker;
+        assembly {
+            // - Start of the string contents in memory = description + 32
+            // - First character of the marker = len - 52
+            //   - Length of "#proposer=0x0000000000000000000000000000000000000000" = 52
+            // - We read the memory word starting at the first character of the marker:
+            //   - (description + 32) + (len - 52) = description + (len - 20)
+            // - Note: Solidity will ignore anything past the first 12 bytes
+            marker := mload(add(description, sub(len, 20)))
+        }
+
+        // If the marker is not found, there is no proposer suffix to check
+        if (marker != bytes12("#proposer=0x")) {
+            return true;
+        }
+
+        // Parse the 40 characters following the marker as uint160
+        uint160 recovered = 0;
+        for (uint256 i = len - 40; i < len; ++i) {
+            (bool isHex, uint8 value) = _tryHexToUint(bytes(description)[i]);
+            // If any of the characters is not a hex digit, ignore the suffix entirely
+            if (!isHex) {
+                return true;
+            }
+            recovered = (recovered << 4) | value;
+        }
+
+        return recovered == uint160(proposer);
+    }
+
+    function _tryHexToUint(bytes1 char) private pure returns (bool, uint8) {
+        uint8 c = uint8(char);
+        unchecked {
+            // Case 0-9
+            if (47 < c && c < 58) {
+                return (true, c - 48);
+            }
+            // Case A-F
+            else if (64 < c && c < 71) {
+                return (true, c - 55);
+            }
+            // Case a-f
+            else if (96 < c && c < 103) {
+                return (true, c - 87);
+            }
+            // Else: not a hex char
+            else {
+                return (false, 0);
+            }
+        }
     }
 }
