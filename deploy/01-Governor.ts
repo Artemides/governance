@@ -1,5 +1,9 @@
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { developmentChains } from "../hardhat.helper";
+import { verify } from "../utils/verify";
+
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
 
 const governor = async (hre: HardhatRuntimeEnvironment) => {
   const {
@@ -38,6 +42,15 @@ const governor = async (hre: HardhatRuntimeEnvironment) => {
   console.log(
     `future ${_governorAddress} \n governor ${governor.address} \n gimnastiky${gimnastiky.address}`
   );
+
+  if (!isDevelopmentChain()) {
+    await verify(gimnastiky.address, myTokenArgs);
+    await verify(_governorAddress, myGovernorArgs);
+  }
+};
+
+const isDevelopmentChain = (): boolean => {
+  return developmentChains.includes(network.name) && ETHERSCAN_API_KEY != "";
 };
 
 export default governor;
