@@ -187,16 +187,28 @@ abstract contract Governor2 is
         _proposals[proposalId].executed = true;
 
         emit ProposalExecuted(proposalId);
-        //get proposal Id
-        //get proposal state
-        //require succedd or queued
-        // turn execute true
-        // emit execute event
+
         //run before Execute
         //run _execute
         //run _after execute
         //return proposal Id
         return proposalId;
+    }
+
+    function _beforeExecute(
+        uint256 /* proposalId */,
+        address[] memory targets,
+        uint256[] memory /* values */,
+        bytes[] memory calldatas,
+        bytes32 /* description */
+    ) internal virtual {
+        if (_executor() != address(this)) {
+            for (uint256 i = 0; i < targets.length; i++) {
+                if (targets[i] == address(this)) {
+                    _governanceCall.pushBack(keccak256(calldatas[i]));
+                }
+            }
+        }
     }
 
     function cancel(
