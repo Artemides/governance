@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
+import "dotenv/config";
 
 const SEPOLIA_URL = process.env.ALCHEMY_SEPOLIA_RPC_URL || "";
 const METAMASK = process.env.METAMASK_PK || "";

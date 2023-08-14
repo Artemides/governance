@@ -32,7 +32,7 @@ const governor = async (hre: HardhatRuntimeEnvironment) => {
     from: deployer,
     args: myGovernorArgs,
     log: true,
-    gasLimit: 3e7,
+    // gasLimit: 3e7,
   });
 
   console.log(
