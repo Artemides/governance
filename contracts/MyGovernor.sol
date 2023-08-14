@@ -18,7 +18,7 @@ contract MyGovernor is
         IVotes _token
     )
         Governor("MyGovernor")
-        GovernorSettings(1, 1, 0)
+        GovernorSettings(2400, 21600, 0)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(4)
     {}
@@ -29,7 +29,7 @@ contract MyGovernor is
         override(IGovernor, GovernorSettings)
         returns (uint256)
     {
-        return super.votingPeriod();
+        return super.votingDelay();
     }
 
     function votingPeriod()
