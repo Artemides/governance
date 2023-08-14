@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 abstract contract Governor2 is
     IGovernor,
@@ -188,11 +189,26 @@ abstract contract Governor2 is
 
         emit ProposalExecuted(proposalId);
 
-        //run before Execute
-        //run _execute
-        //run _after execute
-        //return proposal Id
+        _beforeExecute(proposalId, targets, values, calldatas, description);
+        _execute(targets, values, calldatas, description);
+        _afterExecute(proposalId, targets, values, calldatas, description);
         return proposalId;
+    }
+
+    function _execute(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 /* descriptionHash */
+    ) internal virtual {
+        string
+            memory errorMessage = "Governor: Function call reverted without reason";
+        for (uint i = 0; i < targets.length; i++) {
+            (bool success, bytes memory responseData) = targets[i].call{
+                value: values[i]
+            }(calldatas[i]);
+            Address.verifyCallResult(success, responseData, errorMessage);
+        }
     }
 
     function _beforeExecute(
