@@ -211,6 +211,20 @@ abstract contract Governor2 is
         }
     }
 
+    function _afterExecute(
+        uint256 /* proposalId */,
+        address[] memory /* targets */,
+        uint256[] memory /* values */,
+        bytes[] memory /* calldatas */,
+        bytes32 /*descriptionHash*/
+    ) internal virtual {
+        if (_executor() != address(this)) {
+            if (!_governanceCall.empty()) {
+                _governanceCall.clear();
+            }
+        }
+    }
+
     function cancel(
         address[] memory targets,
         uint256[] memory values,
