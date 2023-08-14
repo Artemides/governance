@@ -164,6 +164,41 @@ abstract contract Governor2 is
         return proposalId;
     }
 
+    function execute(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 description
+    ) public payable virtual override returns (uint256) {
+        uint256 proposalId = hashProposal(
+            targets,
+            values,
+            calldatas,
+            description
+        );
+
+        ProposalState currentState = state(proposalId);
+        require(
+            currentState == ProposalState.Succeeded ||
+                currentState == ProposalState.Queued,
+            "Governor: Proposal not successful"
+        );
+
+        _proposals[proposalId].executed = true;
+
+        emit ProposalExecuted(proposalId);
+        //get proposal Id
+        //get proposal state
+        //require succedd or queued
+        // turn execute true
+        // emit execute event
+        //run before Execute
+        //run _execute
+        //run _after execute
+        //return proposal Id
+        return proposalId;
+    }
+
     function cancel(
         address[] memory targets,
         uint256[] memory values,
