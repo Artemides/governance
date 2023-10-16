@@ -7,7 +7,6 @@ contract Crowfunding is AccessControlV2 {
     bytes32 public constant BACKER = keccak256("BACKER");
 
     address public _campaignOwner;
-    AccessControlV2.RoleData private _adminRole;
 
     event FundsContributed(address indexed backerAddrs, uint256 amount);
     event FundsWithdrawn(address owner);
@@ -31,11 +30,11 @@ contract Crowfunding is AccessControlV2 {
     }
 
     function addBacker(address backerAddrs) external onlyAdmin {
-        _grantRole(BACKER, backerAddrs);
+        grantRole(BACKER, backerAddrs);
     }
 
     function removeBacker(address backerAddrs) external onlyAdmin {
-        _revokeRole(BACKER, backerAddrs);
+        revokeRole(BACKER, backerAddrs);
     }
 
     function setCampaignOwner(address campaignOwner) external onlyAdmin {

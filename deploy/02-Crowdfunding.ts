@@ -19,7 +19,11 @@ const crowdfundingDeployment = async (hre: HardhatRuntimeEnvironment) => {
     waitConfirmations: 1,
   });
 
-  if (developmentChains.includes(network.name)) {
+  if (!developmentChains.includes(network.name)) {
     verify(crowfunding.address, args);
   }
 };
+
+export default crowdfundingDeployment;
+
+crowdfundingDeployment.tags = ["all", "crowfunding"];
