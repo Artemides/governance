@@ -12,7 +12,7 @@ const crowdfundingDeployment = async (hre: HardhatRuntimeEnvironment) => {
   const deployer = (await getNamedAccounts()).deployer;
   let args: any[] = [];
 
-  const crowfunding = await deploy("Crowfunding", {
+  const crowdfunding = await deploy("Crowdfunding", {
     from: deployer,
     args,
     log: true,
@@ -20,10 +20,10 @@ const crowdfundingDeployment = async (hre: HardhatRuntimeEnvironment) => {
   });
 
   if (!developmentChains.includes(network.name)) {
-    verify(crowfunding.address, args);
+    verify(crowdfunding.address, args);
   }
 };
 
 export default crowdfundingDeployment;
 
-crowdfundingDeployment.tags = ["all", "crowfunding"];
+crowdfundingDeployment.tags = ["all", "crowdfunding"];

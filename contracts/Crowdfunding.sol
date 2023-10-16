@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 import {AccessControlV2} from "./Access/AccessControlV2.sol";
 
-contract Crowfunding is AccessControlV2 {
+contract Crowdfunding is AccessControlV2 {
     bytes32 public constant BACKER = keccak256("BACKER");
 
     address public _campaignOwner;
